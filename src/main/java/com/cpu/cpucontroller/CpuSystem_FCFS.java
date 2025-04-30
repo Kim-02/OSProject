@@ -1,19 +1,21 @@
 package com.cpu.cpucontroller;
 
-import com.cpu.Processor.ProcessorController;
+
 import com.cpu.process.Process;
+import com.cpu.processor.ProcessorController;
+
 
 import java.util.Comparator;
 import java.util.PriorityQueue;
 
-public class CpuSystem_SRTN extends CpuSystem {
+
+public class CpuSystem_FCFS extends CpuSystem {
 
     @Override
-    public void setComparatorBasedOnCpu() {
-        // BT가 가장 짧은 순
-        WaitingProcessQueue = new PriorityQueue<>(Comparator.comparingInt(Process::getRemainTime));
+    public void setComparatorBasedOnCpu(){
+        WaitingProcessQueue = new PriorityQueue<>(
+                Comparator.comparingInt(Process::getArrivalTime));
     }
-
     @Override
     public void runOneClock() {
         // 도착 시간에 맞는 프로세스가 대기 큐에 추가되는 부분
@@ -36,27 +38,7 @@ public class CpuSystem_SRTN extends CpuSystem {
             ProcessorController availableProcessor = findEmptyProcessor();
             availableProcessor.setProcess(WaitingProcessQueue.poll());
         }
-        boolean ContextSwitchingFlag = false;
-        if(findEmptyProcessor() == null && !WaitingProcessQueue.isEmpty()) {
-            while(true){
-                Process compareProcess = WaitingProcessQueue.peek();
-                for(ProcessorController processor : ProcessorList){
-                    if(compareProcess.getRemainTime() < processor.getUsingProcess().getRemainTime()){
-                        Process switchingProcess = processor.PreemptionProcess();
-                        processor.setProcess(WaitingProcessQueue.poll());
-                        WaitingProcessQueue.add(switchingProcess);
-                        ContextSwitchingFlag = true;
-                        break;
-                    }
-                }
-                if(ContextSwitchingFlag){
-                    ContextSwitchingFlag = false;
-                }
-                else{
-                    break;
-                }
-            }
-        }
+
         // 프로세서가 사용 중이지 않으면 비활성화
         for (ProcessorController processor : ProcessorList) {
             processor.setProcessorStatusNonRunning();

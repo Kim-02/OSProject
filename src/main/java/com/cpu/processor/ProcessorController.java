@@ -1,4 +1,4 @@
-package com.cpu.Processor;
+package com.cpu.processor;
 
 
 import com.cpu.process.Process;

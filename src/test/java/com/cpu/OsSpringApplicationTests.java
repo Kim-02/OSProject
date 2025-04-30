@@ -1,4 +1,4 @@
-package src.cpu.os_spring;
+package com.cpu;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

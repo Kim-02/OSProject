@@ -1,4 +1,4 @@
-package src.cpu.os_spring;
+package com.cpu;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

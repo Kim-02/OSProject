@@ -1,12 +1,12 @@
 package com.cpu.cpucontroller;
 
-import com.cpu.Processor.P_Processor;
+import com.cpu.processor.P_Processor;
 import lombok.Getter;
 
 import java.util.*;
 
 import com.cpu.process.Process;
-import com.cpu.Processor.ProcessorController;
+import com.cpu.processor.ProcessorController;
 
 @Getter
 public abstract class CpuSystem {

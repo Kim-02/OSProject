@@ -1,21 +1,19 @@
 package com.cpu.cpucontroller;
 
-
+import com.cpu.processor.ProcessorController;
 import com.cpu.process.Process;
-import com.cpu.Processor.ProcessorController;
-
 
 import java.util.Comparator;
 import java.util.PriorityQueue;
 
-
-public class CpuSystem_FCFS extends CpuSystem {
+public class CpuSystem_SPN extends CpuSystem {
 
     @Override
-    public void setComparatorBasedOnCpu(){
-        WaitingProcessQueue = new PriorityQueue<>(
-                Comparator.comparingInt(Process::getArrivalTime));
+    public void setComparatorBasedOnCpu() {
+        // PriorityQueue를 사용하여 자동으로 정렬된 상태로 프로세스를 저장합니다.
+        WaitingProcessQueue = new PriorityQueue<>(Comparator.comparingInt(Process::getRemainTime));
     }
+
     @Override
     public void runOneClock() {
         // 도착 시간에 맞는 프로세스가 대기 큐에 추가되는 부분
@@ -51,4 +49,5 @@ public class CpuSystem_FCFS extends CpuSystem {
         }
         printProcessorStatus();
     }
+
 }

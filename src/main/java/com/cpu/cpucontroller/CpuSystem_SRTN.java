@@ -1,16 +1,16 @@
 package com.cpu.cpucontroller;
 
-import com.cpu.Processor.ProcessorController;
+import com.cpu.processor.ProcessorController;
 import com.cpu.process.Process;
 
 import java.util.Comparator;
 import java.util.PriorityQueue;
 
-public class CpuSystem_SPN extends CpuSystem {
+public class CpuSystem_SRTN extends CpuSystem {
 
     @Override
     public void setComparatorBasedOnCpu() {
-        // PriorityQueue를 사용하여 자동으로 정렬된 상태로 프로세스를 저장합니다.
+        // BT가 가장 짧은 순
         WaitingProcessQueue = new PriorityQueue<>(Comparator.comparingInt(Process::getRemainTime));
     }
 
@@ -36,7 +36,27 @@ public class CpuSystem_SPN extends CpuSystem {
             ProcessorController availableProcessor = findEmptyProcessor();
             availableProcessor.setProcess(WaitingProcessQueue.poll());
         }
-
+        boolean ContextSwitchingFlag = false;
+        if(findEmptyProcessor() == null && !WaitingProcessQueue.isEmpty()) {
+            while(true){
+                Process compareProcess = WaitingProcessQueue.peek();
+                for(ProcessorController processor : ProcessorList){
+                    if(compareProcess.getRemainTime() < processor.getUsingProcess().getRemainTime()){
+                        Process switchingProcess = processor.PreemptionProcess();
+                        processor.setProcess(WaitingProcessQueue.poll());
+                        WaitingProcessQueue.add(switchingProcess);
+                        ContextSwitchingFlag = true;
+                        break;
+                    }
+                }
+                if(ContextSwitchingFlag){
+                    ContextSwitchingFlag = false;
+                }
+                else{
+                    break;
+                }
+            }
+        }
         // 프로세서가 사용 중이지 않으면 비활성화
         for (ProcessorController processor : ProcessorList) {
             processor.setProcessorStatusNonRunning();
@@ -49,5 +69,4 @@ public class CpuSystem_SPN extends CpuSystem {
         }
         printProcessorStatus();
     }
-
 }

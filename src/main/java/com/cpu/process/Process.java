@@ -1,4 +1,4 @@
-package src.cpu.os_spring.process;
+package com.cpu.process;
 
 
 import lombok.*;
