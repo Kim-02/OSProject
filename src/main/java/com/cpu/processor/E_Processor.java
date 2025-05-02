@@ -3,10 +3,14 @@ package com.cpu.processor;
 import com.cpu.process.Process;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.stereotype.Component;
 
+
+@Component
 @Getter
 @Setter
 public class E_Processor implements ProcessorController{
+    public Integer Id;
     private Process usingProcess;
     private Double powerConsumption = 0.0;
     private Boolean isProcessorRunning = false;
@@ -53,6 +57,10 @@ public class E_Processor implements ProcessorController{
         if(usingProcess == null && isProcessorRunning){
             isProcessorRunning = false;
         }
+    }
+    @Override
+    public Boolean getIsRunning(){
+        return isProcessorRunning;
     }
 
 }

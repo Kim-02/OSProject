@@ -1,12 +1,19 @@
 package com.cpu.processor;
 
+import com.cpu.process.ClockHistory;
 import com.cpu.process.Process;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.stereotype.Component;
 
+import java.util.LinkedList;
+import java.util.Queue;
+
+@Component
 @Getter
 @Setter
 public class P_Processor implements ProcessorController{
+    private Integer Id;
     private Process usingProcess;
     private Double powerConsumption = 0.0;
     private Boolean isProcessorRunning = false;
@@ -54,4 +61,8 @@ public class P_Processor implements ProcessorController{
         }
     }
 
+    @Override
+    public Boolean getIsRunning(){
+        return isProcessorRunning;
+    }
 }

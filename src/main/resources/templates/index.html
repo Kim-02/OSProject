@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CPU 스케줄링 시뮬레이터</title>
+
+    <!-- static/css/styles.css -->
+    <link rel="stylesheet" th:href="@{/css/styles.css}" />
+
+    <!-- Google Charts loader -->
+    <script th:src="@{https://www.gstatic.com/charts/loader.js}"></script>
+</head>
+<body>
+<h1>CPU 스케줄링 시뮬레이터</h1>
+
+<section class="config">
+    <label>
+        알고리즘:
+        <select id="algorithm">
+            <option>FCFS</option>
+            <option>SPN</option>
+            <option>SRTN</option>
+            <option>RR</option>
+            <option>HRRN</option>
+        </select>
+    </label>
+    <label>
+        P-코어 수:
+        <input type="number" id="pCount" min="0" max="4" value="2" />
+    </label>
+    <label>
+        E-코어 수:
+        <input type="number" id="eCount" min="0" max="4" value="2" />
+    </label>
+</section>
+
+<section class="process-input">
+    <h2>프로세스 추가</h2>
+    <label>이름: <input type="text" id="procName" /></label>
+    <label>도착시간: <input type="number" id="arrivalTime" min="0" /></label>
+    <label>버스트타임: <input type="number" id="remainTime" min="1" /></label>
+    <button id="addProc">추가</button>
+
+    <table id="procTable">
+        <thead>
+        <tr><th>이름</th><th>도착</th><th>버스트</th><th>액션</th></tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+</section>
+
+<section class="run">
+    <button id="runSim">시뮬레이션 실행</button>
+</section>
+
+<section class="charts">
+    <div id="chart_div"></div>
+    <div id="power_div"></div>
+</section>
+
+<!-- static/js/scheduler.js -->
+<script th:src="@{/js/scheduler.js}"></script>
+</body>
+</html>

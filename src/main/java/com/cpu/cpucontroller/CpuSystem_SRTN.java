@@ -2,10 +2,15 @@ package com.cpu.cpucontroller;
 
 import com.cpu.processor.ProcessorController;
 import com.cpu.process.Process;
+import org.springframework.beans.factory.config.ConfigurableBeanFactory;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
 
 import java.util.Comparator;
 import java.util.PriorityQueue;
 
+@Component("SRTN")
+@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class CpuSystem_SRTN extends CpuSystem {
 
     @Override
@@ -25,7 +30,7 @@ public class CpuSystem_SRTN extends CpuSystem {
 
         // 각 프로세서를 확인하고, 종료된 프로세스는 종료 큐에 추가
         for (ProcessorController processor : ProcessorList) {
-            if (processor.getUsingProcess() != null && processor.getUsingProcess().getRemainTime() <= 0) {
+            if (processor != null && processor.getUsingProcess() != null && processor.getUsingProcess().getRemainTime() <= 0) {
                 Process terminatedProcess = processor.RemoveTerminatedProcess(ProcessingTime);
                 TerminateProcessQueue.add(terminatedProcess);
             }
@@ -36,12 +41,13 @@ public class CpuSystem_SRTN extends CpuSystem {
             ProcessorController availableProcessor = findEmptyProcessor();
             availableProcessor.setProcess(WaitingProcessQueue.poll());
         }
+
         boolean ContextSwitchingFlag = false;
         if(findEmptyProcessor() == null && !WaitingProcessQueue.isEmpty()) {
             while(true){
                 Process compareProcess = WaitingProcessQueue.peek();
                 for(ProcessorController processor : ProcessorList){
-                    if(compareProcess.getRemainTime() < processor.getUsingProcess().getRemainTime()){
+                    if(processor!=null&&compareProcess.getRemainTime() < processor.getUsingProcess().getRemainTime()){
                         Process switchingProcess = processor.PreemptionProcess();
                         processor.setProcess(WaitingProcessQueue.poll());
                         WaitingProcessQueue.add(switchingProcess);
@@ -67,6 +73,5 @@ public class CpuSystem_SRTN extends CpuSystem {
             processor.DecreaseUsingProcessBT();
             processor.IncreasePowerConsumption();
         }
-        printProcessorStatus();
     }
 }

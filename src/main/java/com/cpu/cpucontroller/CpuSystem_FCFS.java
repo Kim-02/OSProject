@@ -3,12 +3,16 @@ package com.cpu.cpucontroller;
 
 import com.cpu.process.Process;
 import com.cpu.processor.ProcessorController;
+import org.springframework.beans.factory.config.ConfigurableBeanFactory;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
 
 
 import java.util.Comparator;
 import java.util.PriorityQueue;
 
-
+@Component("FCFS")
+@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class CpuSystem_FCFS extends CpuSystem {
 
     @Override
@@ -49,6 +53,5 @@ public class CpuSystem_FCFS extends CpuSystem {
             processor.DecreaseUsingProcessBT();
             processor.IncreasePowerConsumption();
         }
-        printProcessorStatus();
     }
 }
