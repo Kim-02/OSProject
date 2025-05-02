@@ -19,19 +19,27 @@ public abstract class CpuSystem {
     protected Queue<Process> TerminateProcessQueue = new LinkedList<>();
     protected PriorityQueue<Process> WaitingProcessQueue;
     protected Integer ProcessingTime =0;
-    protected ArrayList<ProcessorController> ProcessorList = new ArrayList<>(4);
+    protected List<ProcessorController> ProcessorList = new ArrayList<>(4);
     protected int ProcessorCount = 0;
     protected Map<Integer,Queue<Process>> ProcessMap = new HashMap<>();
     protected Queue<ClockHistory> ClockHistoryQueue = new LinkedList<>();
     private int timeQuantum = 2; //RR에서 사용하는 timequntum
 
     public void reset(){
+        // 1) 기존 스케줄링 자료구조 완전 초기화
         TerminateProcessQueue.clear();
-        WaitingProcessQueue.clear();
-        ProcessingTime = 0;
-        ProcessorList.clear();
-        ProcessorCount = 0;
+        ClockHistoryQueue.clear();
         ProcessMap.clear();
+
+        // 2) 시간 초기화
+        ProcessingTime = 0;
+
+        // 3) 코어 리스트 완전 초기화
+        ProcessorList = new ArrayList<>(4);
+        ProcessorCount = 0;
+
+        // 4) 대기 큐 재생성: 알고리즘별 Comparator로 다시 세팅
+        setComparatorBasedOnCpu();
     }
 
     public CpuSystem() {

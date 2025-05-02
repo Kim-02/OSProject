@@ -2,19 +2,14 @@ package com.cpu.service;
 
 import com.cpu.ResponseJson;
 import com.cpu.cpucontroller.CpuSystem;
-import com.cpu.process.ClockHistory;
 import com.cpu.process.Process;
 import com.cpu.process.SchedulingRequest;
 import com.cpu.processor.E_Processor;
 import com.cpu.processor.P_Processor;
-import com.cpu.processor.ProcessorController;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-
-import java.time.Clock;
 import java.util.*;
 
 @Slf4j
