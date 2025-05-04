@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8" />
+    <title>CPU 스케줄링 시뮬레이터</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        h1, h2 { margin-bottom: 0.5em; }
+        .form-group { margin-bottom: 1em; }
+        label { display: inline-block; width: 120px; }
+        input, select, button { padding: 4px; }
+        table { border-collapse: collapse; margin-top: 0.5em; }
+        th, td { border: 1px solid #ccc; padding: 4px 8px; }
+        #controls { margin-top: 1em; }
+        #layout { display: flex; }
+        #chartArea { position: relative; margin-left: 50px; }
+        #ganttCanvas { display: block; margin-top: 1em; border: 1px solid #aaa; }
+        #processorLabels { position: absolute; left: -50px; top: 1em; }
+        .processor-label { height: 40px; line-height: 40px; width: 40px; text-align: right; margin-bottom: 0; }
+        #waitingQueue { margin-top: 10px; }
+        .queue-item { display: inline-block; padding: 4px 8px; margin-right: 4px; background: #f0ad4e; color: #fff; border-radius: 4px; }
+        #powerUsage { margin-top: 10px; font-weight: bold; }
+        #resultArea { margin-top: 1em; }
+    </style>
+</head>
+<body>
+
+<h1>CPU 스케줄링 시뮬레이터</h1>
+
+<!-- 알고리즘 선택 -->
+<div class="form-group">
+    <label for="algorithmSelect">Algorithm</label>
+    <select id="algorithmSelect">
+        <option value="FCFS">FCFS</option>
+        <option value="RR">RR</option>
+        <option value="SPN">SPN</option>
+        <option value="SRTN">SRTN</option>
+        <option value="HRRN">HRRN</option>
+    </select>
+</div>
+<div class="form-group" id="timeQuantumDiv" style="display:none;">
+    <label for="timeQuantum">Time Quantum</label>
+    <input type="number" id="timeQuantum" min="1" value="1" />
+</div>
+
+<div class="form-group">
+    <label>Processes</label>
+    <button id="addProcessBtn">+ Add Process</button>
+    <table id="processTable"><thead><tr><th>Name</th><th>AT</th><th>BT</th><th>Remove</th></tr></thead><tbody></tbody></table>
+</div>
+<div class="form-group">
+    <label>Processors</label>
+    <button id="addProcessorBtn">+ Add Core</button>
+    <table id="processorTable"><thead><tr><th>Type</th><th>Remove</th></tr></thead><tbody></tbody></table>
+    <div style="font-size:0.9em;color:#666;">최대 4개까지 추가 가능합니다.</div>
+</div>
+
+<div id="controls">
+    <button id="simulateBtn">Simulate</button>
+</div>
+
+<div id="powerUsage">
+    P코어: <span id="pPower">0.00</span> | E코어: <span id="ePower">0.00</span>
+</div>
+<div id="waitingQueue"><strong>Waiting:</strong></div>
+
+<div id="layout">
+    <div id="chartArea">
+        <div id="processorLabels"></div>
+        <canvas id="ganttCanvas"></canvas>
+    </div>
+</div>
+
+<div id="resultArea" style="display:none;">
+    <div id="avgNtt" style="margin-top: 8px; font-weight: bold;">평균 NTT: <span id="avgNttValue"></span></div>
+    <h2>Summary</h2>
+    <table id="resultTable"><thead><tr><th>Process</th><th>AT</th><th>BT</th><th>TT</th><th>WT</th><th>NTT</th></tr></thead><tbody></tbody></table>
+</div>
+
+<script>
+    // UI 제어
+    const algorithmSelect = document.getElementById('algorithmSelect');
+    const timeQuantumDiv = document.getElementById('timeQuantumDiv');
+    algorithmSelect.addEventListener('change', () => {
+        timeQuantumDiv.style.display = algorithmSelect.value === 'RR' ? 'block' : 'none';
+    });
+
+    // Process 추가/제거
+    const processTableBody = document.querySelector('#processTable tbody');
+    document.getElementById('addProcessBtn').addEventListener('click', () => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+        <td><input class="proc-name" value="P${processTableBody.children.length + 1}"/></td>
+        <td><input class="proc-at" type="number" value="0" min="0"/></td>
+        <td><input class="proc-bt" type="number" value="1" min="1"/></td>
+        <td><button class="removeBtn">x</button></td>
+    `;
+        row.querySelector('.removeBtn').addEventListener('click', () => row.remove());
+        processTableBody.append(row);
+    });
+
+    // Processor 추가/제거
+    const processorTableBody = document.querySelector('#processorTable tbody');
+    document.getElementById('addProcessorBtn').addEventListener('click', () => {
+        if (processorTableBody.children.length >= 4) return;
+        const r = document.createElement('tr');
+        r.innerHTML = `
+        <td>
+            <select class="core-type">
+                <option value="P">P</option>
+                <option value="E" selected>E</option>
+            </select>
+        </td>
+        <td><button class="removeBtn">x</button></td>
+    `;
+        r.querySelector('.removeBtn').addEventListener('click', () => r.remove());
+        processorTableBody.append(r);
+    });
+
+    // 캔버스 & 차트
+    const canvas = document.getElementById('ganttCanvas');
+    const ctx = canvas.getContext('2d');
+    ctx.textBaseline = 'middle';
+    ctx.font = '14px sans-serif';
+
+    let chartData;
+    let coreTypes = [];
+    let maxClock, coreCount;
+    const cellW = 40, cellH = 40;
+    let colorMap = {};
+    let appended = new Set();
+    const colors = ['#4a90e2', '#50e3c2', '#f5a623', '#d0021b'];
+
+    function initCanvas() {
+        maxClock = chartData.data.length;
+        coreCount = coreTypes.length;
+        canvas.width = cellW * maxClock;
+        canvas.height = cellH * coreCount + 20;
+        drawGrid();
+        appended.clear();
+        chartData.result.forEach((r, i) => colorMap[r.processId] = colors[i % colors.length]);
+        const labelDiv = document.getElementById('processorLabels');
+        labelDiv.innerHTML = '';
+        coreTypes.forEach(type => {
+            const d = document.createElement('div');
+            d.className = 'processor-label';
+            d.textContent = type;
+            labelDiv.append(d);
+        });
+        document.querySelector('#resultTable tbody').innerHTML = '';
+        document.getElementById('resultArea').style.display = 'block';
+    }
+
+    function drawGrid() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.strokeStyle = '#ccc';
+        for (let i = 0; i <= coreCount; i++) {
+            ctx.beginPath();
+            ctx.moveTo(0, i * cellH);
+            ctx.lineTo(cellW * maxClock, i * cellH);
+            ctx.stroke();
+        }
+        for (let t = 0; t <= maxClock; t++) {
+            ctx.beginPath();
+            ctx.moveTo(t * cellW, 0);
+            ctx.lineTo(t * cellW, coreCount * cellH);
+            ctx.stroke();
+            ctx.fillStyle = '#666';
+            ctx.fillText(t, t * cellW + 2, coreCount * cellH + 12);
+        }
+    }
+
+    function updateWaiting(list) {
+        const w = document.getElementById('waitingQueue');
+        w.innerHTML = '<strong>Waiting:</strong> ';
+        list.forEach(p => {
+            const s = document.createElement('span');
+            s.className = 'queue-item';
+            s.textContent = p.processName;
+            w.append(s);
+        });
+    }
+
+    function drawFrame(t) {
+        const e = chartData.data[t];
+        let pS = 0, eS = 0;
+        e.processorHistoryList.forEach((c, i) => {
+            if (c.usingProcess) {
+                const x = c.usingProcess;
+                const y = colorMap[x.processName] || '#999';
+                ctx.fillStyle = y;
+                ctx.fillRect(t * cellW, i * cellH, cellW, cellH);
+                ctx.fillStyle = '#fff';
+                ctx.fillText(x.processName, t * cellW + 4, i * cellH + cellH / 2);
+            }
+            const typ = coreTypes[i];
+            if (typ === 'P') pS += c.powerConsumption;
+            else eS += c.powerConsumption;
+        });
+        document.getElementById('pPower').textContent = pS.toFixed(2);
+        document.getElementById('ePower').textContent = eS.toFixed(2);
+        updateWaiting(e.waitingProcessList);
+        e.terminatedProcessList.forEach(p => {
+            if (!appended.has(p.processName)) {
+                appended.add(p.processName);
+                const r = chartData.result.find(x => x.processId === p.processName);
+                const tr = document.createElement('tr');
+                tr.style.backgroundColor = colorMap[p.processName];
+                tr.innerHTML = `
+                <td>${r.processId}</td>
+                <td>${r.at}</td>
+                <td>${r.bt}</td>
+                <td>${r.tt}</td>
+                <td>${r.wt}</td>
+                <td>${r.ntt.toFixed(2)}</td>
+            `;
+                document.querySelector('#resultTable tbody').append(tr);
+            }
+        });
+    }
+
+    let clock = 0, anim = false;
+    function step() {
+        if (!anim) return;
+        if (clock < maxClock) {
+            drawFrame(clock++);
+            setTimeout(step, 500);
+        } else {
+            anim = false;
+            // 모든 클럭 완료 후 평균 NTT 계산
+            const avg = chartData.result.reduce((sum, r) => sum + r.ntt, 0) / chartData.result.length;
+            document.getElementById('avgNttValue').textContent = avg.toFixed(2);
+        }
+    }
+
+    document.getElementById('simulateBtn').addEventListener('click', () => {
+        const req = {
+            algorithm: algorithmSelect.value,
+            processList: Array.from(processTableBody.children).map(r => ({
+                processName: r.querySelector('.proc-name').value,
+                arrivalTime: +r.querySelector('.proc-at').value,
+                remainTime: +r.querySelector('.proc-bt').value,
+                terminateTime: null
+            })),
+            processorList: coreTypes = Array.from(processorTableBody.children).map(r => r.querySelector('.core-type').value),
+            timeQuantum: algorithmSelect.value === 'RR' ? +document.getElementById('timeQuantum').value : 0
+        };
+        console.log('[DEBUG] request payload:', req);
+        fetch('/api/schedule/get_schedule', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(req)
+        })
+            .then(r => r.json())
+            .then(json => {
+                chartData = json;
+                clock = 0;
+                anim = true;
+                initCanvas();
+                step();
+            })
+            .catch(console.error);
+    });
+</script>
+
+</body>
+</html>

@@ -33,7 +33,8 @@ public class P_Processor implements ProcessorController{
     @Override
     public void DecreaseUsingProcessBT(){
         if(usingProcess != null) { // 만약 처리할 수 있는 프로세스라면
-            usingProcess.setRemainTime(usingProcess.getRemainTime()-WorkingCounter); //  시간을 2 감소시킨다
+            usingProcess.setRemainTime(usingProcess.getRemainTime()-WorkingCounter); //  시간을 1 감소시킨다
+            usingProcess.setServiceTime(usingProcess.getServiceTime()+1);
         }
     }
     public Process RemoveTerminatedProcess(Integer currentTime){

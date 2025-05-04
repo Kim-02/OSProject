@@ -2,6 +2,7 @@ package com.cpu.service;
 
 import com.cpu.ResponseJson;
 import com.cpu.cpucontroller.CpuSystem;
+import com.cpu.dto.ProcessResultStatusDto;
 import com.cpu.process.Process;
 import com.cpu.process.SchedulingRequest;
 import com.cpu.processor.E_Processor;
@@ -66,11 +67,13 @@ public class SchedulingService {
             system.IncreaseProcessingTime();
             system.SetClockHistory();
         }
+        List<ProcessResultStatusDto> ResultList = system.getProcessResultStatusList();
         return ResponseEntity.ok(
                 ResponseJson.builder()
                         .name("schedule success")
                         .message("update ClockPoint")
                         .data(system.getClockHistoryQueue())
+                        .result(ResultList)
                         .build()
 
         );

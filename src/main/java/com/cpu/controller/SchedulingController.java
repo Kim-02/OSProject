@@ -18,7 +18,7 @@ public class SchedulingController {
 
     private final SchedulingService schedulingService;
 
-    @PostMapping("/run")
+    @PostMapping("/get_schedule")
     public ResponseEntity<ResponseJson<Object>> runSchedule(@RequestBody SchedulingRequest schedulingRequest) {
         return schedulingService.run(schedulingRequest);
     }

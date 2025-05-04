@@ -1,5 +1,6 @@
 package com.cpu.cpucontroller;
 
+import com.cpu.dto.ProcessResultStatusDto;
 import com.cpu.dto.ProcessorHistoryDto;
 import com.cpu.process.ClockHistory;
 import com.cpu.processor.P_Processor;
@@ -23,6 +24,8 @@ public abstract class CpuSystem {
     protected int ProcessorCount = 0;
     protected Map<Integer,Queue<Process>> ProcessMap = new HashMap<>();
     protected Queue<ClockHistory> ClockHistoryQueue = new LinkedList<>();
+    protected Map<String, ProcessResultStatusDto> resultStatusMap = new HashMap<>();
+
     private int timeQuantum = 2; //RR에서 사용하는 timequntum
 
     public void reset(){
@@ -30,7 +33,7 @@ public abstract class CpuSystem {
         TerminateProcessQueue.clear();
         ClockHistoryQueue.clear();
         ProcessMap.clear();
-
+        resultStatusMap.clear();
         // 2) 시간 초기화
         ProcessingTime = 0;
 
@@ -67,6 +70,7 @@ public abstract class CpuSystem {
                 .ProcessName(ProcessName)
                 .ArrivalTime(AT)
                 .RemainTime(BT)
+                .ServiceTime(0)
                 .build();
         int totalProcesses = ProcessMap.values().stream()
                 .mapToInt(Queue::size)
@@ -83,6 +87,11 @@ public abstract class CpuSystem {
             list.add(P);
             ProcessMap.put(AT, list);
         }
+        resultStatusMap.put(P.getProcessName(),
+                ProcessResultStatusDto.builder()
+                        .AT(P.getArrivalTime())
+                        .BT(P.getRemainTime())
+                        .build());
     }
 
     public ProcessorController findEmptyProcessor(){
@@ -145,6 +154,7 @@ public abstract class CpuSystem {
                     .ArrivalTime(p.getArrivalTime())
                     .RemainTime(p.getRemainTime())
                     .TerminateTime(p.getTerminateTime())
+                    .ServiceTime(p.getServiceTime())
                     .build();
             deepCopy.add(pCopy);
         }
@@ -160,7 +170,21 @@ public abstract class CpuSystem {
                         .build()
         );
     }
-
+    public List<ProcessResultStatusDto> getProcessResultStatusList(){
+        List<ProcessResultStatusDto> returnList = new ArrayList<>();
+        List<Process> TerminateProcessList = getTerminateProcessList();
+        for(Process p : TerminateProcessList){
+            ProcessResultStatusDto resultStatusDto = resultStatusMap.get(p.getProcessName());
+            if(resultStatusDto!=null){
+                resultStatusDto.setProcessId(p.getProcessName());
+                resultStatusDto.setTT(p.getTerminateTime()-p.getArrivalTime());
+                resultStatusDto.setWT(resultStatusDto.getTT()-p.getServiceTime());
+                resultStatusDto.setNTT(Math.floor(((double) resultStatusDto.getTT() / p.getServiceTime()) * 100) / 100.0);
+                returnList.add(resultStatusDto);
+            }
+        }
+        return returnList;
+    }
 
     public abstract void runOneClock();
 }

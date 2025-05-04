@@ -11,4 +11,5 @@ public class ResponseJson<T> {
     String name;
     String message;
     T data;
+    T result;
 }
