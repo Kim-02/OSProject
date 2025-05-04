@@ -1,6 +1,5 @@
 package com.cpu.process;
 
-import com.cpu.processor.ProcessorController;
 import lombok.*;
 
 import java.util.List;
@@ -15,4 +14,5 @@ public class SchedulingRequest {
     private List<Process> processList;
     private List<String> processorList;
     private Integer TimeQuantum;
+    private ProcessTask processTask;
 }

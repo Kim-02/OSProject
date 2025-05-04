@@ -12,10 +12,17 @@ function addProcess() {
     const name = document.getElementById('procName').value.trim();
     const at = parseInt(document.getElementById('arrivalTime').value, 10);
     const bt = parseInt(document.getElementById('remainTime').value, 10);
-    if (!name || isNaN(at) || isNaN(bt)) return alert('모든 값을 올바르게 입력하세요.');
-    processes.push({ processName: name, arrivalTime: at, remainTime: bt });
+    const task = document.getElementById('processTask').value;
+
+    if (!name || isNaN(at) || isNaN(bt) || !task) {
+        alert("모든 값을 올바르게 입력하세요.");
+        return;
+    }
+
+    processes.push({ processName: name, arrivalTime: at, remainTime: bt, processTask: task });
     renderProcessTable();
 }
+
 
 function renderProcessTable() {
     const tbody = document.querySelector('#procTable tbody');
@@ -26,6 +33,7 @@ function renderProcessTable() {
       <td>${p.processName}</td>
       <td>${p.arrivalTime}</td>
       <td>${p.remainTime}</td>
+      <td>${p.processTask || ''}</td>
       <td><button data-i="${i}">삭제</button></td>
     `;
         tbody.appendChild(tr);

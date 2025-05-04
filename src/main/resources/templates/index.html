@@ -19,12 +19,14 @@
     <label>
         알고리즘:
         <select id="algorithm">
-            <option>FCFS</option>
-            <option>SPN</option>
-            <option>SRTN</option>
-            <option>RR</option>
-            <option>HRRN</option>
+            <option value="FCFS">FCFS</option>
+            <option value="SPN">SPN</option>
+            <option value="SRTN">SRTN</option>
+            <option value="RR">RR</option>
+            <option value="HRRN">HRRN</option>
+            <option value="MCIQ">MCIQ</option>
         </select>
+
     </label>
     <label>
         P-코어 수:
@@ -41,6 +43,22 @@
     <label>이름: <input type="text" id="procName" /></label>
     <label>도착시간: <input type="number" id="arrivalTime" min="0" /></label>
     <label>버스트타임: <input type="number" id="remainTime" min="1" /></label>
+    <label for="task">작업:</label>
+    <select id="task">
+        <option value="ATTITUDE_ESTIMATION">자세 추정</option>
+        <option value="ATTITUDE_CONTROL">자세 제어</option>
+        <option value="RATE_CONTROL">속도 제어</option>
+        <option value="MOTOR_MIXER">모터 믹서</option>
+        <option value="GPS_PARSER">GPS 파서</option>
+        <option value="BAROMETER_HANDLE">기압계 처리</option>
+        <option value="MAGNETOMETER_HANDLE">자력계 처리</option>
+        <option value="RC_RECEIVER">RC 수신기</option>
+        <option value="AUTO_LANDING">자동 착륙</option>
+        <option value="FAILSAFE_HANDLER">비상처리</option>
+        <option value="BATTERY_MONITOR">배터리 모니터</option>
+        <option value="TEMPERATURE_MONITOR">온도 모니터</option>
+    </select>
+
     <button id="addProc">추가</button>
 
     <table id="procTable">
