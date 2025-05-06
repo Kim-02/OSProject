@@ -2,6 +2,7 @@ package com.cpu.service;
 
 import com.cpu.ResponseJson;
 import com.cpu.cpucontroller.CpuSystem;
+import com.cpu.cpucontroller.CpuSystem_MCIQ;
 import com.cpu.dto.ProcessResultStatusDto;
 import com.cpu.process.Process;
 import com.cpu.process.SchedulingRequest;
@@ -11,71 +12,88 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import java.util.*;
+
+import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class SchedulingService {
+
     private final Map<String, CpuSystem> cpuSystemMap;
 
     public ResponseEntity<ResponseJson<Object>> run(SchedulingRequest request) {
-        // ① 요청된 알고리즘 키
-        log.info(">>> 요청 알고리즘 키: {}", request.getAlgorithm());
-        // ② 맵에 등록된 모든 키
-        log.info(">>> 사용 가능한 알고리즘 키: {}", cpuSystemMap.keySet());
+        log.info(">>> 요청 알고리즘: {}", request.getAlgorithm());
+        log.info(">>> 사용 가능한 알고리즘: {}", cpuSystemMap.keySet());
         CpuSystem system = cpuSystemMap.get(request.getAlgorithm().toUpperCase());
-        log.info(">>> 선택된 CpuSystem Bean: {}",
-                system != null ? system.getClass().getSimpleName() : "null");
+        log.info(">>> 선택된 CpuSystem: {}", system != null ? system.getClass().getSimpleName() : "null");
         if (system == null) {
             return ResponseEntity.notFound().build();
         }
+
         system.reset();
-        if(request.getTimeQuantum()!=null){
+        if (request.getTimeQuantum() != null) {
             system.setTimeQuantum(request.getTimeQuantum());
         }
-        // 프로세스 등록
-        for (Process process : request.getProcessList()) {
-            system.setProcess(
-                    process.getProcessName(),
-                    process.getArrivalTime(),
-                    process.getRemainTime()
-            );
+
+        // ▶ MCIQ 전용 vs 기존 알고리즘 프로세스 등록
+        for (Process proc : request.getProcessList()) {
+            if (system instanceof CpuSystem_MCIQ) {
+                log.info("▶ MCIQ 프로세스 등록: {} [{}]", proc.getProcessName(), proc.getProcessTask());
+                ((CpuSystem_MCIQ) system).addMciqProcess(
+                        proc.getProcessName(),
+                        proc.getArrivalTime(),
+                        proc.getRemainTime(),
+                        proc.getProcessTask()
+                );
+            } else {
+                system.setProcess(
+                        proc.getProcessName(),
+                        proc.getArrivalTime(),
+                        proc.getRemainTime()
+                );
+            }
         }
 
-        // 코어 타입 설정
-        for (String coreType : request.getProcessorList()) {
-            if ("P".equalsIgnoreCase(coreType)) {
+        // 코어 타입 세팅
+        for (String type : request.getProcessorList()) {
+            if ("P".equalsIgnoreCase(type)) {
                 system.setProcessor(new P_Processor());
-            } else if ("E".equalsIgnoreCase(coreType)) {
+            } else if ("E".equalsIgnoreCase(type)) {
                 system.setProcessor(new E_Processor());
             } else {
-                return ResponseEntity.ok(
-                        ResponseJson.builder()
-                                .name("schedule")
-                                .message("Unknown processor type: " + coreType)
-                                .build()
+                return ResponseEntity.ok(ResponseJson.builder()
+                        .name("schedule")
+                        .message("Unknown processor type: " + type)
+                        .build()
                 );
             }
         }
         system.setProcessorCount(request.getProcessorList().size());
 
-        // 시뮬레이션 수행
-        int totalProcesses = request.getProcessList().size();
-        while (system.getTerminateProcessQueue().size() < totalProcesses) {
-            system.runOneClock();
-            system.IncreaseProcessingTime();
-            system.SetClockHistory();
-        }
-        List<ProcessResultStatusDto> ResultList = system.getProcessResultStatusList();
-        return ResponseEntity.ok(
-                ResponseJson.builder()
-                        .name("schedule success")
-                        .message("update ClockPoint")
-                        .data(system.getClockHistoryQueue())
-                        .result(ResultList)
-                        .build()
+        // 시뮬레이션 실행
+        int total = request.getProcessList().size();
 
+        if (system instanceof CpuSystem_MCIQ mciq) {
+            while (!mciq.isFinished()) {
+                mciq.runOneClock();          // ✅ 시간 증가 포함됨
+                mciq.SetClockHistory();
+            }
+        } else {
+            while (system.getTerminateProcessQueue().size() < total) {
+                system.runOneClock();        // ✅ 다른 알고리즘도 runOneClock() 내에서 시간 증가
+                system.SetClockHistory();
+            }
+        }
+
+        List<ProcessResultStatusDto> result = system.getProcessResultStatusList();
+        return ResponseEntity.ok(ResponseJson.builder()
+                .name("schedule success")
+                .message("update ClockPoint")
+                .data(system.getClockHistoryQueue())
+                .result(result)
+                .build()
         );
     }
 }
