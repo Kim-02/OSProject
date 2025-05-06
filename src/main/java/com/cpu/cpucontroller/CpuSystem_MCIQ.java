@@ -20,20 +20,21 @@ import java.util.*;
 public class CpuSystem_MCIQ extends CpuSystem {
 
     private static final Map<ProcessTask, Integer> PRIORITY;
+
     static {
-        Map<ProcessTask,Integer> m = new EnumMap<>(ProcessTask.class);
-        m.put(ProcessTask.ATTITUDE_ESTIMATION,   12);
-        m.put(ProcessTask.ATTITUDE_CONTROL,      11);
-        m.put(ProcessTask.RATE_CONTROL,          10);
-        m.put(ProcessTask.MOTOR_MIXER,            9);
-        m.put(ProcessTask.GPS_PARSER,             8);
-        m.put(ProcessTask.BAROMETER_HANDLE,       7);
-        m.put(ProcessTask.MAGNETOMETER_HANDLE,    6);
-        m.put(ProcessTask.RC_RECEIVER,            5);
-        m.put(ProcessTask.AUTO_LANDING,           4);
-        m.put(ProcessTask.FAILSAFE_HANDLER,       3);
-        m.put(ProcessTask.BATTERY_MONITOR,        2);
-        m.put(ProcessTask.TEMPERATURE_MONITOR,    1);
+        Map<ProcessTask, Integer> m = new EnumMap<>(ProcessTask.class);
+        m.put(ProcessTask.ATTITUDE_ESTIMATION, 12);
+        m.put(ProcessTask.ATTITUDE_CONTROL, 11);
+        m.put(ProcessTask.RATE_CONTROL, 10);
+        m.put(ProcessTask.MOTOR_MIXER, 9);
+        m.put(ProcessTask.GPS_PARSER, 8);
+        m.put(ProcessTask.BAROMETER_HANDLE, 7);
+        m.put(ProcessTask.MAGNETOMETER_HANDLE, 6);
+        m.put(ProcessTask.RC_RECEIVER, 5);
+        m.put(ProcessTask.AUTO_LANDING, 4);
+        m.put(ProcessTask.FAILSAFE_HANDLER, 3);
+        m.put(ProcessTask.BATTERY_MONITOR, 2);
+        m.put(ProcessTask.TEMPERATURE_MONITOR, 1);
         PRIORITY = Collections.unmodifiableMap(m);
     }
 
@@ -44,14 +45,16 @@ public class CpuSystem_MCIQ extends CpuSystem {
                     .thenComparingInt(Process::getArrivalTime)
     );
     private final PriorityQueue<Process> sensorQueue = new PriorityQueue<>(flightQueue.comparator());
-    private final PriorityQueue<Process> commQueue   = new PriorityQueue<>(flightQueue.comparator());
-    private final PriorityQueue<Process> sysQueue    = new PriorityQueue<>(flightQueue.comparator());
+    private final PriorityQueue<Process> commQueue = new PriorityQueue<>(flightQueue.comparator());
+    private final PriorityQueue<Process> sysQueue = new PriorityQueue<>(flightQueue.comparator());
 
     public CpuSystem_MCIQ() {
         super();
     }
 
-    /** MCIQ 전용 프로세스 등록 */
+    /**
+     * MCIQ 전용 프로세스 등록
+     */
     public void addMciqProcess(String name,
                                Integer arrivalTime,
                                Integer remainTime,
@@ -148,8 +151,8 @@ public class CpuSystem_MCIQ extends CpuSystem {
         List<Process> all = new ArrayList<>();
         for (Process p : flightQueue) all.add(copyOf(p));
         for (Process p : sensorQueue) all.add(copyOf(p));
-        for (Process p : commQueue)   all.add(copyOf(p));
-        for (Process p : sysQueue)    all.add(copyOf(p));
+        for (Process p : commQueue) all.add(copyOf(p));
+        for (Process p : sysQueue) all.add(copyOf(p));
         return all;
     }
 
@@ -162,5 +165,24 @@ public class CpuSystem_MCIQ extends CpuSystem {
                 .TerminateTime(p.getTerminateTime())
                 .processTask(p.getProcessTask())
                 .build();
+    }
+
+    /**
+     * 전체 종료 조건
+     */
+    public boolean isFinished() {
+        boolean queuesEmpty =
+                flightQueue.isEmpty() &&
+                        sensorQueue.isEmpty() &&
+                        commQueue.isEmpty() &&
+                        sysQueue.isEmpty();
+
+        boolean processorsIdle = ProcessorList.stream()
+                .allMatch(p -> p.getUsingProcess() == null);
+
+        boolean processMapEmpty = ProcessMap.values().stream()
+                .allMatch(Queue::isEmpty);
+
+        return queuesEmpty && processorsIdle && processMapEmpty;
     }
 }
