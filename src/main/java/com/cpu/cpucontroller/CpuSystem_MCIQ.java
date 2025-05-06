@@ -139,7 +139,7 @@ public class CpuSystem_MCIQ extends CpuSystem {
             proc.setProcessorStatusNonRunning();
         }
 
-        // ✅ 7. 시간 증가 (필수!)
+        // 7. 시간 증가
         ProcessingTime++;
     }
 
@@ -162,23 +162,5 @@ public class CpuSystem_MCIQ extends CpuSystem {
                 .TerminateTime(p.getTerminateTime())
                 .processTask(p.getProcessTask())
                 .build();
-    }
-
-
-    /** 전체 종료 조건 */
-    public boolean isFinished() {
-        boolean queuesEmpty =
-                flightQueue.isEmpty() &&
-                        sensorQueue.isEmpty() &&
-                        commQueue.isEmpty() &&
-                        sysQueue.isEmpty();
-
-        boolean processorsIdle = ProcessorList.stream()
-                .allMatch(p -> p.getUsingProcess() == null);
-
-        boolean processMapEmpty = ProcessMap.values().stream()
-                .allMatch(Queue::isEmpty);
-
-        return queuesEmpty && processorsIdle && processMapEmpty;
     }
 }
