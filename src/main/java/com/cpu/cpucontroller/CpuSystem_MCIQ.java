@@ -48,7 +48,7 @@ public class CpuSystem_MCIQ extends CpuSystem {
     private final PriorityQueue<Process> commQueue = new PriorityQueue<>(flightQueue.comparator());
     private final PriorityQueue<Process> sysQueue = new PriorityQueue<>(flightQueue.comparator());
 
-    public CpuSystem_MCIQ() {
+    public CpuSystem_MCIQ() { // 보류
         super();
     }
 
@@ -93,6 +93,12 @@ public class CpuSystem_MCIQ extends CpuSystem {
             }
         }
 
+        for (ProcessorController proc : ProcessorList) {
+            Process run = proc.getUsingProcess();
+            if (run != null && run.getRemainTime() <= 0) {
+                TerminateProcessQueue.add(proc.RemoveTerminatedProcess(ProcessingTime));
+            }
+        }
         List<PriorityQueue<Process>> queues = List.of(flightQueue, sensorQueue, commQueue, sysQueue);
 
         // 2. 선점 + 프로세스 할당
@@ -118,23 +124,6 @@ public class CpuSystem_MCIQ extends CpuSystem {
         for (ProcessorController proc : ProcessorList) {
             proc.DecreaseUsingProcessBT();
             proc.IncreasePowerConsumption();
-        }
-
-        // 4. 종료 프로세스 처리
-        for (ProcessorController proc : ProcessorList) {
-            Process run = proc.getUsingProcess();
-            if (run != null && run.getRemainTime() <= 0) {
-                TerminateProcessQueue.add(proc.RemoveTerminatedProcess(ProcessingTime));
-            }
-        }
-
-        // 5. 종료 후 빈 코어 재할당
-        for (int i = 0; i < ProcessorList.size(); i++) {
-            ProcessorController proc = ProcessorList.get(i);
-            PriorityQueue<Process> q = queues.get(i);
-            if (proc.getUsingProcess() == null && !q.isEmpty()) {
-                proc.setProcess(q.poll());
-            }
         }
 
         // 6. idle 상태 갱신
