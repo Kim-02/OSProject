@@ -74,22 +74,24 @@ public class SchedulingService {
 
         // 시뮬레이션 실행
         int total = request.getProcessList().size();
-
+        List<ProcessResultStatusDto> result;
         if (system instanceof CpuSystem_MCIQ mciq) {
             while (!mciq.isFinished()) {
                 mciq.runOneClock();
                 mciq.SetClockHistory();
                 mciq.IncreaseProcessingTime();
             }
+            result = mciq.getProcessResultStatusList();
         } else {
             while (system.getTerminateProcessQueue().size() < total) {
                 system.runOneClock();
                 system.SetClockHistory();
                 system.IncreaseProcessingTime();
             }
+            result = system.getProcessResultStatusList();
         }
 
-        List<ProcessResultStatusDto> result = system.getProcessResultStatusList();
+
         return ResponseEntity.ok(ResponseJson.builder()
                 .name("schedule success")
                 .message("update ClockPoint")

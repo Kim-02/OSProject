@@ -143,6 +143,7 @@ public abstract class CpuSystem {
     }
 
     public void SetClockHistory() {
+
         ClockHistoryQueue.add(
                 ClockHistory.builder()
                         .clock(ProcessingTime)

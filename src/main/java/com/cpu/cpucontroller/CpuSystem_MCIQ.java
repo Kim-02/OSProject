@@ -1,5 +1,6 @@
 package com.cpu.cpucontroller;
 
+import com.cpu.dto.ProcessResultStatusDto;
 import com.cpu.process.Process;
 import com.cpu.process.ProcessTask;
 import com.cpu.processor.ProcessorController;
@@ -66,9 +67,17 @@ public class CpuSystem_MCIQ extends CpuSystem {
                 .ServiceTime(0)
                 .processTask(processTask)
                 .build();
+        int total = ProcessMap.values().stream().mapToInt(Queue::size).sum();
+        if(total >=15)
+            throw new IllegalStateException("전체 프로세스 수가 15개를 넘었습니다");
         ProcessMap
                 .computeIfAbsent(arrivalTime, k -> new LinkedList<>())
                 .add(p);
+        resultStatusMap.put(p.getProcessName(),
+                ProcessResultStatusDto.builder()
+                        .AT(p.getArrivalTime())
+                        .BT(p.getRemainTime())
+                        .build());
     }
 
     @Override
@@ -83,13 +92,16 @@ public class CpuSystem_MCIQ extends CpuSystem {
             Queue<Process> arrivals = ProcessMap.get(ProcessingTime);
             while (!arrivals.isEmpty()) {
                 Process p = arrivals.poll();
-                switch (p.getProcessTask()) {
-                    case ATTITUDE_ESTIMATION, ATTITUDE_CONTROL, RATE_CONTROL, MOTOR_MIXER -> flightQueue.add(p);
-                    case GPS_PARSER, BAROMETER_HANDLE, MAGNETOMETER_HANDLE -> sensorQueue.add(p);
-                    case RC_RECEIVER, AUTO_LANDING -> commQueue.add(p);
-                    case FAILSAFE_HANDLER, BATTERY_MONITOR, TEMPERATURE_MONITOR -> sysQueue.add(p);
-                    default -> flightQueue.add(p);
+                if(p.getProcessTask()!=null){
+                    switch (p.getProcessTask()) {
+                        case ATTITUDE_ESTIMATION, ATTITUDE_CONTROL, RATE_CONTROL, MOTOR_MIXER -> flightQueue.add(p);
+                        case GPS_PARSER, BAROMETER_HANDLE, MAGNETOMETER_HANDLE -> sensorQueue.add(p);
+                        case RC_RECEIVER, AUTO_LANDING -> commQueue.add(p);
+                        case FAILSAFE_HANDLER, BATTERY_MONITOR, TEMPERATURE_MONITOR -> sysQueue.add(p);
+                        default -> flightQueue.add(p);
+                    }
                 }
+
             }
         }
 

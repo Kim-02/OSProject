@@ -96,6 +96,7 @@
                 <option value="SPN">SPN</option>
                 <option value="SRTN">SRTN</option>
                 <option value="HRRN">HRRN</option>
+                <option value="MCIQ">MCIQ</option> <!-- MCIQ 추가 -->
             </select>
             <div id="timeQuantumDiv" style="margin-top:10px; display:none;">
                 <label for="timeQuantum">Time Quantum</label>
@@ -155,7 +156,7 @@
             <div class="section-title">프로세스 입력 설정</div>
             <button id="addProcessBtn">+ Add Process</button>
             <table id="processTable">
-                <thead><tr><th>Name</th><th>AT</th><th>BT</th><th>Remove</th></tr></thead>
+                <thead><tr><th>Name</th><th>AT</th><th>BT</th><th>Process Task</th><th>Remove</th></tr></thead>
                 <tbody></tbody>
             </table>
         </div>
@@ -196,8 +197,18 @@
     // Algorithm → Time Quantum 토글
     const algorithmSelect = document.getElementById('algorithmSelect');
     const timeQuantumDiv = document.getElementById('timeQuantumDiv');
+    const processTaskDiv = document.getElementById('processTaskDiv');
+
     algorithmSelect.addEventListener('change', () => {
+        // Time Quantum 관련 로직
         timeQuantumDiv.style.display = algorithmSelect.value === 'RR' ? 'block' : 'none';
+
+        // Process Task 드롭다운 보이기/숨기기
+        if (algorithmSelect.value === 'MCIQ') {
+            processTaskDiv.style.display = 'block';  // MCIQ일 때만 보이도록 설정
+        } else {
+            processTaskDiv.style.display = 'none';   // 다른 알고리즘일 때는 숨기기
+        }
     });
 
     // 전역 상태
@@ -230,6 +241,22 @@
       <td><input class="proc-name" value="P${processTableBody.children.length + 1}"/></td>
       <td><input class="proc-at" type="number" value="0" min="0"/></td>
       <td><input class="proc-bt" type="number" value="1" min="1"/></td>
+      <td>
+        <select class="proc-task" ${algorithmSelect.value !== 'MCIQ' ? 'disabled' : ''}>
+            <option value="ATTITUDE_ESTIMATION">ATTITUDE_ESTIMATION</option>
+            <option value="MAGNETOMETER_HANDLE">MAGNETOMETER_HANDLE</option>
+            <option value="GPS_PARSER">GPS_PARSER</option>
+            <option value="FAILSAFE_HANDLER">FAILSAFE_HANDLER</option>
+            <option value="AUTO_LANDING">AUTO_LANDING</option>
+            <option value="BATTERY_MONITOR">BATTERY_MONITOR</option>
+            <option value="BAROMETER_HANDLE">BAROMETER_HANDLE</option>
+            <option value="RC_RECEIVER">RC_RECEIVER</option>
+            <option value="RATE_CONTROL">RATE_CONTROL</option>
+            <option value="MOTOR_MIXER">MOTOR_MIXER</option>
+            <option value="ATTITUDE_CONTROL">ATTITUDE_CONTROL</option>
+            <option value="TEMPERATURE_MONITOR">TEMPERATURE_MONITOR</option>
+        </select>
+      </td>
       <td><button class="removeBtn">x</button></td>
     `;
         row.querySelector('.removeBtn').addEventListener('click', () => row.remove());
@@ -399,7 +426,10 @@
                 processName: r.querySelector('.proc-name').value,
                 arrivalTime: +r.querySelector('.proc-at').value,
                 remainTime: +r.querySelector('.proc-bt').value,
-                terminateTime: null
+                terminateTime: null,
+                processTask: algorithmSelect.value === 'MCIQ'
+                    ? r.querySelector('.proc-task').value
+                    : null
             })),
             processorList: coreTypes = Array.from(processorTableBody.children)
                 .map(r => r.querySelector('.core-type').value),
