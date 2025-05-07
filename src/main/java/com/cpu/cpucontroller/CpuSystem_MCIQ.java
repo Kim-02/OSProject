@@ -120,19 +120,18 @@ public class CpuSystem_MCIQ extends CpuSystem {
             }
         }
 
+        // 6. idle 상태 갱신
+        for (ProcessorController proc : ProcessorList) {
+            proc.setProcessorStatusNonRunning();
+        }
+
         // 3. 실행 & 전력 소비
         for (ProcessorController proc : ProcessorList) {
             proc.DecreaseUsingProcessBT();
             proc.IncreasePowerConsumption();
         }
 
-        // 6. idle 상태 갱신
-        for (ProcessorController proc : ProcessorList) {
-            proc.setProcessorStatusNonRunning();
-        }
 
-        // 7. 시간 증가
-        ProcessingTime++;
     }
 
     @Override

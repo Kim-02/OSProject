@@ -77,13 +77,15 @@ public class SchedulingService {
 
         if (system instanceof CpuSystem_MCIQ mciq) {
             while (!mciq.isFinished()) {
-                mciq.runOneClock();          // ✅ 시간 증가 포함됨
+                mciq.runOneClock();
                 mciq.SetClockHistory();
+                mciq.IncreaseProcessingTime();
             }
         } else {
             while (system.getTerminateProcessQueue().size() < total) {
-                system.runOneClock();        // ✅ 다른 알고리즘도 runOneClock() 내에서 시간 증가
+                system.runOneClock();
                 system.SetClockHistory();
+                system.IncreaseProcessingTime();
             }
         }
 
