@@ -24,7 +24,19 @@ public class CpuSystem_HRRN extends CpuSystem {
             return Double.compare(ratio2, ratio1);
         });
     }
-
+    private PriorityQueue<Process> getSortedProcessQueue(){
+        PriorityQueue<Process> newQueue = new PriorityQueue<>((p1, p2) -> {
+            double wait1 = ProcessingTime - p1.getArrivalTime();
+            double ratio1 = (wait1 + p1.getRemainTime()) / p1.getRemainTime();
+            double wait2 = ProcessingTime - p2.getArrivalTime();
+            double ratio2 = (wait2 + p2.getRemainTime()) / p2.getRemainTime();
+            return Double.compare(ratio2, ratio1); // HRRN 기준 정렬
+        });
+        while (!WaitingProcessQueue.isEmpty()) {
+            newQueue.add(WaitingProcessQueue.poll());
+        }
+        return newQueue;
+    }
     @Override
     public void runOneClock() {
         // 1) 도착 프로세스 대기 큐에 추가
@@ -43,7 +55,7 @@ public class CpuSystem_HRRN extends CpuSystem {
                 TerminateProcessQueue.add(term);
             }
         }
-
+        WaitingProcessQueue = getSortedProcessQueue(); //재정렬함 -> 만약 추가되는 프로세스가 없다면 정렬이 되지 않기 때문
         // 3) 빈 코어가 있으면 HRRN 기준으로 할당 (비선점)
         while (!WaitingProcessQueue.isEmpty() && findEmptyProcessor() != null) {
             ProcessorController free = findEmptyProcessor();
@@ -60,6 +72,7 @@ public class CpuSystem_HRRN extends CpuSystem {
             processor.DecreaseUsingProcessBT();
             processor.IncreasePowerConsumption();
         }
+
     }
 }
 
