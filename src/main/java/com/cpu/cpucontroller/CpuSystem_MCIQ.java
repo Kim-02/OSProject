@@ -121,7 +121,13 @@ public class CpuSystem_MCIQ extends CpuSystem {
             Process running = proc.getUsingProcess();
             if (running != null && !q.isEmpty()) {
                 Process top = q.peek();
-                if (PRIORITY.get(top.getProcessTask()) > PRIORITY.get(running.getProcessTask())) {
+                double wait1    = ProcessingTime - running.getArrivalTime();
+                double ratio1   = (wait1 + running.getRemainTime()) / running.getRemainTime();
+                double wait2    = ProcessingTime - top.getArrivalTime();
+                double ratio2   = (wait2 + top.getRemainTime()) / top.getRemainTime();
+                log.info("top of task ratio "+PRIORITY.get(top.getProcessTask())+ratio2);
+                log.info("top of running ratio "+PRIORITY.get(running.getProcessTask())+ratio1);
+                if ((PRIORITY.get(top.getProcessTask())+ratio2) > (PRIORITY.get(running.getProcessTask())+ratio1)) {
                     q.add(proc.PreemptionProcess());
                     proc.setProcess(q.poll());
                 }
