@@ -46,10 +46,10 @@ public class CpuSystem_MCIQ extends CpuSystem {
                     .thenComparingInt(Process::getArrivalTime)
     );
     private final PriorityQueue<Process> sensorQueue = new PriorityQueue<>(flightQueue.comparator());
-    private final PriorityQueue<Process> commQueue = new PriorityQueue<>(flightQueue.comparator());
-    private final PriorityQueue<Process> sysQueue = new PriorityQueue<>(flightQueue.comparator());
+    private final PriorityQueue<Process> commQueue   = new PriorityQueue<>(flightQueue.comparator());
+    private final PriorityQueue<Process> sysQueue    = new PriorityQueue<>(flightQueue.comparator());
 
-    public CpuSystem_MCIQ() { // 보류
+    public CpuSystem_MCIQ() {
         super();
     }
 
@@ -68,7 +68,7 @@ public class CpuSystem_MCIQ extends CpuSystem {
                 .processTask(processTask)
                 .build();
         int total = ProcessMap.values().stream().mapToInt(Queue::size).sum();
-        if(total >=15)
+        if (total >= 15)
             throw new IllegalStateException("전체 프로세스 수가 15개를 넘었습니다");
         ProcessMap
                 .computeIfAbsent(arrivalTime, k -> new LinkedList<>())
@@ -82,6 +82,7 @@ public class CpuSystem_MCIQ extends CpuSystem {
 
     @Override
     public void setComparatorBasedOnCpu() {
+        // 필요 시 구현
     }
 
     @Override
@@ -91,26 +92,32 @@ public class CpuSystem_MCIQ extends CpuSystem {
             Queue<Process> arrivals = ProcessMap.get(ProcessingTime);
             while (!arrivals.isEmpty()) {
                 Process p = arrivals.poll();
-                if(p.getProcessTask()!=null){
+                if (p.getProcessTask() != null) {
                     switch (p.getProcessTask()) {
-                        case ATTITUDE_ESTIMATION, ATTITUDE_CONTROL, RATE_CONTROL, MOTOR_MIXER -> flightQueue.add(p);
-                        case GPS_PARSER, BAROMETER_HANDLE, MAGNETOMETER_HANDLE -> sensorQueue.add(p);
-                        case RC_RECEIVER, AUTO_LANDING -> commQueue.add(p);
-                        case FAILSAFE_HANDLER, BATTERY_MONITOR, TEMPERATURE_MONITOR -> sysQueue.add(p);
-                        default -> flightQueue.add(p);
+                        case ATTITUDE_ESTIMATION, ATTITUDE_CONTROL,
+                             RATE_CONTROL, MOTOR_MIXER   -> flightQueue.add(p);
+                        case GPS_PARSER, BAROMETER_HANDLE,
+                             MAGNETOMETER_HANDLE         -> sensorQueue.add(p);
+                        case RC_RECEIVER, AUTO_LANDING    -> commQueue.add(p);
+                        case FAILSAFE_HANDLER, BATTERY_MONITOR,
+                             TEMPERATURE_MONITOR         -> sysQueue.add(p);
+                        default                          -> flightQueue.add(p);
                     }
                 }
-
             }
         }
 
+        // 1.5. 종료된 프로세스 수집
         for (ProcessorController proc : ProcessorList) {
             Process run = proc.getUsingProcess();
             if (run != null && run.getRemainTime() <= 0) {
                 TerminateProcessQueue.add(proc.RemoveTerminatedProcess(ProcessingTime));
             }
         }
-        List<PriorityQueue<Process>> queues = List.of(flightQueue, sensorQueue, commQueue, sysQueue);
+
+        List<PriorityQueue<Process>> queues = List.of(
+                flightQueue, sensorQueue, commQueue, sysQueue
+        );
 
         // 2. 선점 + 프로세스 할당
         for (int i = 0; i < ProcessorList.size(); i++) {
@@ -118,20 +125,29 @@ public class CpuSystem_MCIQ extends CpuSystem {
             PriorityQueue<Process> q = queues.get(i);
 
             Process running = proc.getUsingProcess();
+            // 선점 조건 검사
             if (running != null && !q.isEmpty()) {
                 Process top = q.peek();
-                double wait1    = ProcessingTime - running.getArrivalTime();
-                double ratio1   = (wait1 + running.getRemainTime()) / running.getRemainTime();
-                double wait2    = ProcessingTime - top.getArrivalTime();
-                double ratio2   = (wait2 + top.getRemainTime()) / top.getRemainTime();
-                log.info("top of task ratio "+PRIORITY.get(top.getProcessTask())+ratio2);
-                log.info("top of running ratio "+PRIORITY.get(running.getProcessTask())+ratio1);
-                if ((PRIORITY.get(top.getProcessTask())+ratio2) > (PRIORITY.get(running.getProcessTask())+ratio1)) {
-                    q.add(proc.PreemptionProcess());
-                    proc.setProcess(q.poll());
+                double wait1  = ProcessingTime - running.getArrivalTime();
+                double ratio1 = (wait1 + running.getRemainTime()) / running.getRemainTime();
+                double wait2  = ProcessingTime - top.getArrivalTime();
+                double ratio2 = (wait2 + top.getRemainTime())   / top.getRemainTime();
+
+                if ((PRIORITY.get(top.getProcessTask()) + ratio2)
+                        > (PRIORITY.get(running.getProcessTask()) + ratio1)) {
+                    // 새 프로세스를 먼저 poll
+                    Process next      = q.poll();
+                    // 기존 실행 프로세스 재삽입
+                    Process preempted = proc.PreemptionProcess();
+                    // 대기시간 계산을 위해 도착 시간을 갱신할 수 있음
+                    preempted.setArrivalTime(ProcessingTime);
+                    q.add(preempted);
+                    // 선점된 새 프로세스 할당
+                    proc.setProcess(next);
                 }
             }
 
+            // 빈 코어에 프로세스 할당
             if (proc.getUsingProcess() == null && !q.isEmpty()) {
                 proc.setProcess(q.poll());
             }
@@ -147,8 +163,6 @@ public class CpuSystem_MCIQ extends CpuSystem {
             proc.DecreaseUsingProcessBT();
             proc.IncreasePowerConsumption();
         }
-
-
     }
 
     @Override
@@ -156,8 +170,8 @@ public class CpuSystem_MCIQ extends CpuSystem {
         List<Process> all = new ArrayList<>();
         for (Process p : flightQueue) all.add(copyOf(p));
         for (Process p : sensorQueue) all.add(copyOf(p));
-        for (Process p : commQueue) all.add(copyOf(p));
-        for (Process p : sysQueue) all.add(copyOf(p));
+        for (Process p : commQueue)   all.add(copyOf(p));
+        for (Process p : sysQueue)    all.add(copyOf(p));
         return all;
     }
 
@@ -176,11 +190,10 @@ public class CpuSystem_MCIQ extends CpuSystem {
      * 전체 종료 조건
      */
     public boolean isFinished() {
-        boolean queuesEmpty =
-                flightQueue.isEmpty() &&
-                        sensorQueue.isEmpty() &&
-                        commQueue.isEmpty() &&
-                        sysQueue.isEmpty();
+        boolean queuesEmpty = flightQueue.isEmpty()
+                && sensorQueue.isEmpty()
+                && commQueue.isEmpty()
+                && sysQueue.isEmpty();
 
         boolean processorsIdle = ProcessorList.stream()
                 .allMatch(p -> p.getUsingProcess() == null);
