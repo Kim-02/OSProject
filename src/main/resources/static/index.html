@@ -3,18 +3,14 @@
 <head>
     <meta charset="UTF-8" />
     <title>프로세스 스케줄러</title>
-    <!-- Pretendard 폰트 -->
-    <link
-            href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/variable/pretendardvariable.css"
-            rel="stylesheet"
-    />
-    <!-- Chewy Google Font -->
-    <link
-            href="https://fonts.googleapis.com/css2?family=Chewy&display=swap"
-            rel="stylesheet"
-    />
+    <!-- Pretendard 폰트 (로컬) -->
+    <link rel="stylesheet" href="fonts/pretendard/pretendardvariable.css" />
+
+    <!-- Chewy 폰트 (로컬) -->
+    <link rel="stylesheet" href="fonts/chewy/chewy.css" />
+
     <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="chart.js"></script>
 
     <style>
         body {
@@ -391,7 +387,7 @@
                         />
                     </div>
                     <div id="mcqiBanner" style="margin-top: 10px; color: #e45f5f; font-weight: bold; font-size: 0.8em;">
-                        ※ MCIQ 스케줄러 선택 시, 프로세스 설정이 초기화되며 프로세서의 수가 4개로 고정됩니다.
+                        ※ MCIQ 스케줄러 선택 시, 프로세스 설정이 초기화되며 프로세서의 수가 4개로 고정되며 자동으로 초기화됩니다.
                     </div>
                 </div>
             </div>
@@ -1009,7 +1005,6 @@
                     initCanvas();
                     renderCoreOverview();
                     step();
-                    // Reset processCount after simulation (and table reset)
                     processCount = 0;
                 })
                 .catch(console.error);
