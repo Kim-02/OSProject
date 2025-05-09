@@ -2,19 +2,20 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8" />
-    <title>CPU 스케줄링 시뮬레이터</title>
+    <title>프로세스 스케줄러</title>
     <!-- Pretendard 폰트 -->
     <link
             href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/variable/pretendardvariable.css"
             rel="stylesheet"
     />
-    <!-- Sour Gummy Google Font -->
+    <!-- Chewy Google Font -->
     <link
-            href="https://fonts.googleapis.com/css2?family=Sour+Gummy&display=swap"
+            href="https://fonts.googleapis.com/css2?family=Chewy&display=swap"
             rel="stylesheet"
     />
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <style>
         body {
             font-family: "Pretendard", sans-serif;
@@ -51,7 +52,7 @@
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
             border: 1px solid #e0e0e0;
             z-index: 1;
-            overflow: visible;
+            overflow: visible !important;
             transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
         .card-content {
@@ -73,17 +74,7 @@
             transition: opacity 0.15s ease, transform 0.15s ease;
             pointer-events: none;
             transition-delay: 0s;
-            z-index: 10;
-        }
-        .card .author-tooltip::after {
-            content: "";
-            position: absolute;
-            top: -4px;
-            left: 50%;
-            transform: translateX(-50%);
-            border-width: 6px;
-            border-style: solid;
-            border-color: transparent transparent #333 transparent;
+            z-index: 9999;
         }
         .card:hover .author-tooltip {
             opacity: 1;
@@ -149,9 +140,11 @@
             border: none;
             font-weight: bold;
             cursor: pointer;
+            transition: background-color 0.3s ease, box-shadow 0.3s ease;
         }
         button:hover {
-            background-color: #1a8cff;
+            background-color: #0066cc;
+            box-shadow: 0 0 8px rgba(0, 102, 204, 0.5);
         }
         .removeBtn {
             background-color: #f28b82;
@@ -337,15 +330,15 @@
                 <div
                         class="section-title"
                         style="
-                                font-family: 'Sour Gummy', sans-serif;
-                                font-weight: 600;
+                                font-family: 'Chewy', cursive;
+                                font-weight: 500;
                                 font-size: 3em;
                                 text-align: center;
                                 line-height: 1.1;
                                 padding: 0;
                             "
                 >
-                    JOB<br />SCHEDULER
+                    PROCESS<br />SCEHDULER
                 </div>
             </div>
             <div class="author-tooltip" style="text-align: center">
@@ -396,6 +389,9 @@
                                 min="1"
                                 value="1"
                         />
+                    </div>
+                    <div id="mcqiBanner" style="margin-top: 10px; color: #e45f5f; font-weight: bold; font-size: 0.8em;">
+                        ※ MCIQ 스케줄러 선택 시, 프로세스 설정이 초기화되며 프로세서의 수가 4개로 고정됩니다.
                     </div>
                 </div>
             </div>
@@ -463,16 +459,15 @@
                 </div>
             </div>
             <div class="author-tooltip">
-                현재 시뮬레이션 중의 코어별 전력 소비 및 대기 큐를
-                확인할 수 있습니다
+                현재 시뮬레이션 중의 코어별 전력 소비 및 대기 큐를 확인할 수 있습니다
             </div>
         </div>
 
-        <!-- Simulate Button Card -->
+        <!-- 시뮬레이션 시작 버튼 -->
         <div
                 class="card"
                 style="
-                        height: 60px;
+                        height: 50px;
                         display: flex;
                         align-items: center;
                         justify-content: center;
@@ -480,9 +475,9 @@
         >
             <button
                     id="simulateBtn"
-                    style="font-size: 1.5em; padding: 10px 40px"
+                    style="font-size: 1.5em; padding: 10px 70px"
             >
-                Simulate
+                Simulate!!!
             </button>
         </div>
     </div>
@@ -520,7 +515,7 @@
                 </div>
             </div>
             <div class="author-tooltip">
-                시뮬레이션에 사용할 프로세스 정보를 입력하세요
+                시뮬레이션에 사용할 프로세스 정보를 입력하세요 (프로세스 수 최대 15개)
             </div>
         </div>
 
@@ -624,6 +619,8 @@
     const algorithmSelect = document.getElementById("algorithmSelect");
     const timeQuantumDiv = document.getElementById("timeQuantumDiv");
 
+    let prevAlgorithm = algorithmSelect.value;
+
     algorithmSelect.addEventListener("change", () => {
         // Time Quantum 관련 로직
         timeQuantumDiv.style.display =
@@ -657,7 +654,12 @@
                 });
                 processorTableBody.appendChild(r);
             }
+        } else if (prevAlgorithm === "MCIQ") {
+            // MCIQ 해제 시에만 초기화
+            processTableBody.innerHTML = "";
+            processCount = 0;
         }
+        prevAlgorithm = algorithmSelect.value;
     });
 
     // 전역 상태
@@ -713,9 +715,16 @@
                 alert("최대 15개 프로세스까지 설정 가능합니다.");
                 return;
             }
+            // Generate unique process name (P1, P2, ...)
+            let name;
+            do {
+                name = `P${++processCount}`;
+            } while ([...processTableBody.children].some(
+                r => r.querySelector(".proc-name").value === name
+            ));
             const row = document.createElement("tr");
             row.innerHTML = `
-      <td><input class="proc-name" value="P${++processCount}" readonly/></td>
+      <td><input class="proc-name" value="${name}" readonly/></td>
       <td><input class="proc-at" type="number" value="0" min="0"/></td>
       <td><input class="proc-bt" type="number" value="1" min="1"/></td>
       <td>
@@ -753,8 +762,6 @@
     // Gantt 차트 설정
     const canvas = document.getElementById("ganttCanvas");
     const ctx = canvas.getContext("2d");
-    ctx.textBaseline = "middle";
-    ctx.font = "15px sans-serif";
 
     let chartData, coreTypes, maxClock, coreCount;
     const cellW = 40,
