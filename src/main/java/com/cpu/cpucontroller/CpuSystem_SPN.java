@@ -15,7 +15,6 @@ public class CpuSystem_SPN extends CpuSystem {
 
     @Override
     public void setComparatorBasedOnCpu() {
-        // PriorityQueue를 사용하여 자동으로 정렬된 상태로 프로세스를 저장합니다.
         WaitingProcessQueue = new PriorityQueue<>(Comparator.comparingInt(Process::getRemainTime));
     }
 
@@ -28,7 +27,6 @@ public class CpuSystem_SPN extends CpuSystem {
             }
         }
 
-        // 각 프로세서를 확인하고, 종료된 프로세스는 종료 큐에 추가
         for (ProcessorController processor : ProcessorList) {
             if (processor.getUsingProcess() != null && processor.getUsingProcess().getRemainTime() <= 0) {
                 Process terminatedProcess = processor.RemoveTerminatedProcess(ProcessingTime);
