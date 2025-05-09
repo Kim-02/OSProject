@@ -82,7 +82,6 @@ public class CpuSystem_MCIQ extends CpuSystem {
 
     @Override
     public void setComparatorBasedOnCpu() {
-        WaitingProcessQueue = new PriorityQueue<>(Comparator.comparingInt(Process::getArrivalTime));
     }
 
     @Override

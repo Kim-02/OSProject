@@ -8,6 +8,11 @@
             href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/variable/pretendardvariable.css"
             rel="stylesheet"
     />
+    <!-- Sour Gummy Google Font -->
+    <link
+            href="https://fonts.googleapis.com/css2?family=Sour+Gummy&display=swap"
+            rel="stylesheet"
+    />
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -19,30 +24,76 @@
         }
         .container {
             display: flex;
-            gap: 20px;
+            gap: 24px;
             max-width: 1200px;
             margin: 0 auto;
             padding: 0 20px;
+            min-height: 100vh;
         }
         .left-panel {
-            flex: none;
-            width: 300px;
+            flex: 0 0 360px;
             display: flex;
             flex-direction: column;
             gap: 20px;
         }
         .right-panel {
-            flex: 1;
+            flex: 1 1 auto;
+            min-width: 0;
             display: flex;
             flex-direction: column;
             gap: 20px;
         }
         .card {
+            position: relative;
             background: #fff;
             border-radius: 12px;
             padding: 20px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
             border: 1px solid #e0e0e0;
+            z-index: 1;
+            overflow: visible;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card-content {
+            width: 100%;
+        }
+        .card .author-tooltip {
+            display: block;
+            position: absolute;
+            bottom: -45px;
+            left: 50%;
+            transform: translateX(-50%) scale(0.95);
+            background: #333;
+            color: #fff;
+            padding: 8px 12px;
+            font-size: 0.8em;
+            border-radius: 8px;
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.15s ease, transform 0.15s ease;
+            pointer-events: none;
+            transition-delay: 0s;
+            z-index: 10;
+        }
+        .card .author-tooltip::after {
+            content: "";
+            position: absolute;
+            top: -4px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 6px;
+            border-style: solid;
+            border-color: transparent transparent #333 transparent;
+        }
+        .card:hover .author-tooltip {
+            opacity: 1;
+            transform: translateX(-50%) scale(1);
+            transition-delay: 0.5s;
+        }
+        .section-content {
+            margin-top: 8px;
+            padding-top: 6px;
+            border-top: 1px solid #ddd;
         }
         .section-title {
             font-size: 1.2em;
@@ -73,18 +124,19 @@
             text-align: center;
             font-size: 0.9em;
         }
-        /* Custom column widths and alignment for process table */
-        th:nth-child(2), td:nth-child(2), /* AT column */
-        th:nth-child(3), td:nth-child(3)  /* BT column */ {
+        table thead th {
+            background-color: #f8f8f8;
+        }
+        th:nth-child(2), td:nth-child(2),
+        th:nth-child(3), td:nth-child(3)  {
             width: 60px;
             text-align: center;
         }
-        /* Center align input text for AT and BT columns */
         #processTable td:nth-child(2) input,
         #processTable td:nth-child(3) input {
             text-align: center;
         }
-        th:nth-child(1), td:nth-child(1) /* Name column */ {
+        th:nth-child(1), td:nth-child(1)  {
             width: 100px;
             text-align: center;
         }
@@ -134,7 +186,6 @@
             position: relative;
             margin-left: 40px;
             width: calc(100% - 40px);
-            /*max-width: 1000px;*/
         }
         #processorLabels {
             position: absolute;
@@ -150,7 +201,6 @@
         #ganttCanvas {
             display: block;
             margin-top: 8px;
-            /*border: 1px solid #aaa;*/
         }
         #resultArea {
             display: none;
@@ -168,26 +218,92 @@
             table-layout: fixed;
         }
 
-        /* Animate newly added rows in processTable */
-        #processTable tbody tr {
-            opacity: 0;
-            transform: translateY(-10px);
+        #resultTable {
+            table-layout: fixed;
+            width: 100%;
+        }
+        #resultTable th:nth-child(1),
+        #resultTable td:nth-child(1) {
+            width: 25%;
+        }
+        #resultTable th:nth-child(2),
+        #resultTable td:nth-child(2),
+        #resultTable th:nth-child(3),
+        #resultTable td:nth-child(3),
+        #resultTable th:nth-child(4),
+        #resultTable td:nth-child(4),
+        #resultTable th:nth-child(5),
+        #resultTable td:nth-child(5) {
+            width: 16.67%;
+        }
+        #resultTable th:nth-child(6),
+        #resultTable td:nth-child(6) {
+            width: 25%;
+        }
+
+        #processTableWrapper {
+            max-height: 300px;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        #processTableWrapper::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        #processTableWrapper::-webkit-scrollbar-thumb {
+            background-color: #bbb;
+            border-radius: 3px;
+        }
+
+        #processTableWrapper::-webkit-scrollbar-track {
+            background-color: #f0f0f0;
+        }
+
+        /* 추가 애니메이션 */
+        .fade-in {
             animation: fadeInRow 0.3s ease forwards;
         }
 
         @keyframes fadeInRow {
-            to {
+            0% {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            100% {
                 opacity: 1;
                 transform: translateY(0);
             }
         }
 
+        /* 지우기 애니메이션 */
+        .fade-out {
+            animation: fadeOutRow 0.3s ease forwards;
+        }
+
+        @keyframes fadeOutRow {
+            0% {
+                opacity: 1;
+                transform: translateY(0);
+                height: 40px;
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-10px);
+                height: 0;
+                padding: 0;
+                margin: 0;
+            }
+        }
+
         /* Custom column widths for process table */
-        th:nth-child(4), td:nth-child(4) {
+        th:nth-child(4),
+        td:nth-child(4) {
             width: 40%;
         }
 
-        th:nth-child(5), td:nth-child(5) {
+        th:nth-child(5),
+        td:nth-child(5) {
             width: 50px;
         }
 
@@ -197,192 +313,307 @@
             box-sizing: border-box;
         }
 
-        /* Card hover scale effect */
-        .card {
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        /* Sticky table header for processTable */
+        #processTableWrapper thead th {
+            position: sticky;
+            top: 0;
+            background: rgba(240, 240, 240);
+            z-index: 1;
         }
 
+        /* Card hover scale effect */
         .card:hover {
             transform: scale(1.01);
             box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+            z-index: 2;
         }
     </style>
 </head>
 <body>
 <div class="container">
     <div class="left-panel">
+        <div class="card title-card">
+            <div class="card-content">
+                <div
+                        class="section-title"
+                        style="
+                                font-family: 'Sour Gummy', sans-serif;
+                                font-weight: 600;
+                                font-size: 3em;
+                                text-align: center;
+                                line-height: 1.1;
+                                padding: 0;
+                            "
+                >
+                    JOB<br />SCHEDULER
+                </div>
+            </div>
+            <div class="author-tooltip" style="text-align: center">
+                TEAM. 오예스(OhyeS)<br />
+                -----------------<br />
+                2021136125 조승훈<br />
+                2021136022 김성훈<br />
+                2021136024 김승환<br />
+                2023100299 서유정
+            </div>
+        </div>
         <!-- 알고리즘 선택 -->
         <div class="card">
-            <div class="section-title">알고리즘 선택</div>
-            <div
-                    style="
-                            display: grid;
-                            grid-template-columns: auto 1fr auto;
-                            align-items: center;
-                            gap: 10px;
-                        "
-            >
-                <label for="algorithmSelect" style="margin: 0"
-                >Algorithm</label
-                >
-                <select id="algorithmSelect" style="width: 100%">
-                    <option value="FCFS">FCFS</option>
-                    <option value="RR">RR</option>
-                    <option value="SPN">SPN</option>
-                    <option value="SRTN">SRTN</option>
-                    <option value="HRRN">HRRN</option>
-                    <option value="MCIQ">MCIQ</option>
-                </select>
-                <button id="simulateBtn">Simulate</button>
+            <div class="card-content">
+                <div class="section-title">알고리즘 선택</div>
+                <div class="section-content">
+                    <div
+                            style="
+                                    display: grid;
+                                    grid-template-columns: auto 1fr;
+                                    align-items: center;
+                                    gap: 10px;
+                                "
+                    >
+                        <label for="algorithmSelect" style="margin: 0"
+                        >Algorithm</label
+                        >
+                        <select
+                                id="algorithmSelect"
+                                style="width: 100%"
+                        >
+                            <option value="FCFS">FCFS</option>
+                            <option value="RR">RR</option>
+                            <option value="SPN">SPN</option>
+                            <option value="SRTN">SRTN</option>
+                            <option value="HRRN">HRRN</option>
+                            <option value="MCIQ">MCIQ</option>
+                        </select>
+                    </div>
+                    <div
+                            id="timeQuantumDiv"
+                            style="margin-top: 10px; display: none"
+                    >
+                        <label for="timeQuantum">Time Quantum</label>
+                        <input
+                                type="number"
+                                id="timeQuantum"
+                                min="1"
+                                value="1"
+                        />
+                    </div>
+                </div>
             </div>
-            <div
-                    id="timeQuantumDiv"
-                    style="margin-top: 10px; display: none"
-            >
-                <label for="timeQuantum">Time Quantum</label>
-                <input
-                        type="number"
-                        id="timeQuantum"
-                        min="1"
-                        value="1"
-                />
+            <div class="author-tooltip">
+                시뮬레이션에 사용할 스케줄링 알고리즘을 선택하세요
             </div>
         </div>
 
         <!-- 프로세서 입력 설정 -->
         <div class="card">
-            <div
-                    style="
-                            display: flex;
-                            justify-content: space-between;
-                            align-items: center;
-                        "
-                    class="section-title"
-            >
-                프로세서 입력 설정
-                <button
-                        id="addProcessorBtn"
-                        style="font-size: 0.8em; padding: 5px 6px"
+            <div class="card-content">
+                <div
+                        style="
+                                display: flex;
+                                justify-content: space-between;
+                                align-items: center;
+                            "
+                        class="section-title"
                 >
-                    + Add Core
-                </button>
+                    프로세서 입력 설정
+                    <button
+                            id="addProcessorBtn"
+                            style="font-size: 0.8em; padding: 5px 6px"
+                    >
+                        + Add Core
+                    </button>
+                </div>
+                <div class="section-content">
+                    <table id="processorTable">
+                        <thead>
+                        <tr>
+                            <th>Type</th>
+                            <th>Remove</th>
+                        </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                    <div
+                            style="
+                                    font-size: 0.85em;
+                                    color: #666;
+                                    margin-top: 6px;
+                                "
+                    ></div>
+                </div>
             </div>
-            <table id="processorTable">
-                <thead>
-                <tr>
-                    <th>Type</th>
-                    <th>Remove</th>
-                </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
-            <div
-                    style="font-size: 0.85em; color: #666; margin-top: 6px"
-            >
-                최대 4개까지 추가 가능합니다.
+            <div class="author-tooltip">
+                사용할 P-core, E-core 프로세서를 설정하세요 (최대 4개)
             </div>
         </div>
 
         <!-- 기존 프로세서 개요 -->
         <div class="card">
-            <div class="section-title">프로세서 개요</div>
-            <div id="powerUsage">
-                P코어: <span id="pPower">0.00</span> | E코어:
-                <span id="ePower">0.00</span>
+            <div class="card-content">
+                <div class="section-title">프로세서 개요</div>
+                <div class="section-content">
+                    <div id="powerUsage">
+                        P코어: <span id="pPower">0.00</span>W | E코어:
+                        <span id="ePower">0.00</span>W
+                    </div>
+                    <div id="waitingQueue">
+                        <div>Waiting Queue:</div>
+                        <div id="waitingItems"></div>
+                    </div>
+                </div>
             </div>
-            <div id="waitingQueue">Waiting:</div>
+            <div class="author-tooltip">
+                현재 시뮬레이션 중의 코어별 전력 소비 및 대기 큐를
+                확인할 수 있습니다
+            </div>
         </div>
 
-        <!-- 프로세서 처리 통계 -->
-        <div class="card">
-            <div class="section-title">프로세서 처리 통계</div>
-            <table id="coreOverviewTable">
-                <colgroup>
-                    <col style="width: 16.6%" />
-                    <col style="width: 16.6%" />
-                    <col style="width: 33.3%" />
-                    <col style="width: 33.3%" />
-                </colgroup>
-                <thead>
-                <tr>
-                    <th>Core 번호</th>
-                    <th>Core 타입</th>
-                    <th>
-                        전력 <br />
-                        소비량(W)
-                    </th>
-                    <th>
-                        처리 <br />
-                        프로세스수
-                    </th>
-                </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
-            <canvas id="coreOverviewChart"></canvas>
+        <!-- Simulate Button Card -->
+        <div
+                class="card"
+                style="
+                        height: 60px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                    "
+        >
+            <button
+                    id="simulateBtn"
+                    style="font-size: 1.5em; padding: 10px 40px"
+            >
+                Simulate
+            </button>
         </div>
     </div>
 
     <div class="right-panel">
         <!-- 프로세스 입력 설정 -->
         <div class="card">
-            <div
-                    style="
-                            display: flex;
-                            justify-content: space-between;
-                            align-items: center;
-                        "
-                    class="section-title"
-            >
-                프로세스 입력 설정
-                <button id="addProcessBtn">+ Add Process</button>
+            <div class="card-content">
+                <div
+                        style="
+                                display: flex;
+                                justify-content: space-between;
+                                align-items: center;
+                            "
+                        class="section-title"
+                >
+                    프로세스 입력 설정
+                    <button id="addProcessBtn">+ Add Process</button>
+                </div>
+                <div class="section-content">
+                    <div id="processTableWrapper">
+                        <table id="processTable">
+                            <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>AT</th>
+                                <th>BT</th>
+                                <th>Process Task</th>
+                                <th>Remove</th>
+                            </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
-            <table id="processTable">
-                <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>AT</th>
-                    <th>BT</th>
-                    <th>Process Task</th>
-                    <th>Remove</th>
-                </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
+            <div class="author-tooltip">
+                시뮬레이션에 사용할 프로세스 정보를 입력하세요
+            </div>
         </div>
 
         <!-- Gantt 차트 -->
         <div class="card">
-            <div class="section-title">프로세스 정보</div>
-            <div id="layout">
-                <div id="chartArea">
-                    <div id="processorLabels"></div>
-                    <canvas id="ganttCanvas"></canvas>
+            <div class="card-content">
+                <div class="section-title">프로세스 정보</div>
+                <div class="section-content">
+                    <div id="layout">
+                        <div id="chartArea">
+                            <div id="processorLabels"></div>
+                            <canvas id="ganttCanvas"></canvas>
+                        </div>
+                    </div>
                 </div>
+            </div>
+            <div class="author-tooltip">
+                프로세스 실행 시간과 코어 배정을 시각적으로 확인할 수
+                있습니다
             </div>
         </div>
 
-        <!-- 결과 요약 -->
-        <div class="card">
-            <div class="section-title">프로세스 관리</div>
-            <div id="resultArea">
-                <div id="avgNtt">
-                    평균 NTT: <span id="avgNttValue"></span>
+        <!-- 결과 요약 & 프로세서 처리 통계 (horizontal flex container) -->
+        <div style="display: flex; gap: 20px">
+            <div class="card" style="flex: 1">
+                <div class="card-content">
+                    <div class="section-title">프로세스 관리</div>
+                    <div class="section-content">
+                        <div id="resultArea">
+                            <div id="avgNtt">
+                                평균 NTT: <span id="avgNttValue"></span>
+                            </div>
+                            <table id="resultTable">
+                                <thead>
+                                <tr>
+                                    <th>Process</th>
+                                    <th>AT</th>
+                                    <th>BT</th>
+                                    <th>TT</th>
+                                    <th>WT</th>
+                                    <th>NTT</th>
+                                </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
-                <table id="resultTable">
-                    <thead>
-                    <tr>
-                        <th>Process</th>
-                        <th>AT</th>
-                        <th>BT</th>
-                        <th>TT</th>
-                        <th>WT</th>
-                        <th>NTT</th>
-                    </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
+                <div class="author-tooltip">
+                    각 프로세스의 결과 정보를 확인할 수 있습니다 (TT,
+                    WT, NTT)
+                </div>
+            </div>
+            <div class="card" style="flex: 1">
+                <div class="card-content">
+                    <div class="section-title">프로세서 처리 통계</div>
+                    <div class="section-content">
+                        <table id="coreOverviewTable">
+                            <colgroup>
+                                <col style="width: 20%" />
+                                <col style="width: 20%" />
+                                <col style="width: 30%" />
+                                <col style="width: 30%" />
+                            </colgroup>
+                            <thead>
+                            <tr>
+                                <th>
+                                    Core <br />
+                                    번호
+                                </th>
+                                <th>
+                                    Core <br />
+                                    타입
+                                </th>
+                                <th>
+                                    전력 <br />
+                                    소비량(W)
+                                </th>
+                                <th>
+                                    처리 <br />
+                                    프로세스수
+                                </th>
+                            </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                        <canvas id="coreOverviewChart"></canvas>
+                    </div>
+                </div>
+                <div class="author-tooltip">
+                    각 코어의 전력 소비량 및 처리한 프로세스 수 통계를
+                    보여줍니다
+                </div>
             </div>
         </div>
     </div>
@@ -392,18 +623,40 @@
     // Algorithm → Time Quantum 토글
     const algorithmSelect = document.getElementById("algorithmSelect");
     const timeQuantumDiv = document.getElementById("timeQuantumDiv");
-    const processTaskDiv = document.getElementById("processTaskDiv");
 
     algorithmSelect.addEventListener("change", () => {
         // Time Quantum 관련 로직
         timeQuantumDiv.style.display =
             algorithmSelect.value === "RR" ? "block" : "none";
-
-        // Process Task 드롭다운 보이기/숨기기
+        // MCIQ 선택 시 프로세스/프로세서 테이블 초기화 및 4개 프로세서 설정
         if (algorithmSelect.value === "MCIQ") {
-            processTaskDiv.style.display = "block"; // MCIQ일 때만 보이도록 설정
-        } else {
-            processTaskDiv.style.display = "none"; // 다른 알고리즘일 때는 숨기기
+            // 프로세스 테이블 초기화
+            processTableBody.innerHTML = "";
+            processCount = 0;
+            // 프로세서 테이블 초기화 및 4개 추가
+            processorTableBody.innerHTML = "";
+            for (let i = 0; i < 4; i++) {
+                const r = document.createElement("tr");
+                r.innerHTML = `
+              <td>
+                <select class="core-type">
+                  <option value="P" selected>P-Core</option>
+                  <option value="E">E-Core</option>
+                </select>
+              </td>
+              <td><button class="removeBtn">✖</button></td>
+            `;
+                r.classList.add("fade-in");
+                r.querySelector(".removeBtn").addEventListener("click", () => {
+                    if (algorithmSelect.value === "MCIQ") {
+                        alert("MCIQ 모드에서는 프로세서 개수를 변경할 수 없습니다.");
+                        return;
+                    }
+                    r.classList.add("fade-out");
+                    setTimeout(() => r.remove(), 300);
+                });
+                processorTableBody.appendChild(r);
+            }
         }
     });
 
@@ -418,28 +671,38 @@
     document
         .getElementById("addProcessorBtn")
         .addEventListener("click", () => {
+            if (algorithmSelect.value === "MCIQ") {
+                alert("MCIQ 모드에서는 프로세서 개수를 변경할 수 없습니다.");
+                return;
+            }
             if (processorTableBody.children.length >= 4) {
                 alert("최대 4개 프로세서까지 추가 가능합니다.");
                 return;
             }
             const r = document.createElement("tr");
             r.innerHTML = `
-      <td>
-        <select class="core-type">
-          <option value="P">P-Core</option>
-          <option value="E" selected>E-Core</option>
-        </select>
-      </td>
-      <td><button class="removeBtn" style="background-color: #f28b82; color: white; font-weight: bold; border-radius: 4px;">✖</button></td>
-    `;
-            r.querySelector(".removeBtn").addEventListener(
-                "click",
-                () => r.remove()
-            );
+          <td>
+            <select class="core-type">
+              <option value="P" selected>P-Core</option>
+              <option value="E">E-Core</option>
+            </select>
+          </td>
+          <td><button class="removeBtn">✖</button></td>
+        `;
+            r.classList.add("fade-in");
+            r.querySelector(".removeBtn").addEventListener("click", () => {
+                if (algorithmSelect.value === "MCIQ") {
+                    alert("MCIQ 모드에서는 프로세서 개수를 변경할 수 없습니다.");
+                    return;
+                }
+                r.classList.add("fade-out");
+                setTimeout(() => r.remove(), 300);
+            });
             processorTableBody.appendChild(r);
         });
 
     // Process 추가/삭제
+    let processCount = 0;
     const processTableBody = document.querySelector(
         "#processTable tbody"
     );
@@ -452,9 +715,7 @@
             }
             const row = document.createElement("tr");
             row.innerHTML = `
-      <td><input class="proc-name" value="P${
-                processTableBody.children.length + 1
-            }"/></td>
+      <td><input class="proc-name" value="P${++processCount}" readonly/></td>
       <td><input class="proc-at" type="number" value="0" min="0"/></td>
       <td><input class="proc-bt" type="number" value="1" min="1"/></td>
       <td>
@@ -475,11 +736,16 @@
             <option value="TEMPERATURE_MONITOR">TEMPERATURE_MONITOR</option>
         </select>
       </td>
-      <td><button class="removeBtn" style="background-color: #f28b82; color: white; font-weight: bold; border-radius: 4px;">✖</button></td>
+      <td><button class="removeBtn">✖</button></td>
     `;
+            // Fade-in animation
+            row.classList.add("fade-in");
             row.querySelector(".removeBtn").addEventListener(
                 "click",
-                () => row.remove()
+                () => {
+                    row.classList.add("fade-out");
+                    setTimeout(() => row.remove(), 300);
+                }
             );
             processTableBody.appendChild(row);
         });
@@ -488,14 +754,25 @@
     const canvas = document.getElementById("ganttCanvas");
     const ctx = canvas.getContext("2d");
     ctx.textBaseline = "middle";
-    ctx.font = "14px sans-serif";
+    ctx.font = "15px sans-serif";
 
     let chartData, coreTypes, maxClock, coreCount;
     const cellW = 40,
         cellH = 40;
     let colorMap = {},
         appended = new Set();
-    const colors = ["#4a90e2", "#50e3c2", "#f5a623", "#d0021b"];
+    const colors = [
+        "#4a90e2",
+        "#50e3c2",
+        "#f5a623",
+        "#fc445a",
+        "#fcd34d",
+        "#a3e635",
+        "#9bffd9",
+        "#93c5fd",
+        "#ff56b4",
+        "#d8b4fe",
+    ];
 
     function initStats() {
         coreStats = coreTypes.map((t) => ({
@@ -593,13 +870,13 @@
     }
 
     function updateWaiting(list) {
-        const w = document.getElementById("waitingQueue");
-        w.innerHTML = "Waiting: ";
+        const container = document.getElementById("waitingItems");
+        container.innerHTML = "";
         list.forEach((p) => {
             const s = document.createElement("span");
             s.className = "queue-item";
             s.textContent = p.processName;
-            w.appendChild(s);
+            container.appendChild(s);
         });
     }
 
@@ -613,11 +890,13 @@
                 ctx.fillStyle = colorMap[name] || "#999";
                 ctx.fillRect(t * cellW, i * cellH, cellW, cellH);
                 ctx.fillStyle = "#fff";
+                ctx.textAlign = "center";
                 ctx.fillText(
                     name,
-                    t * cellW + 4,
+                    t * cellW + cellW / 2,
                     i * cellH + cellH / 2
                 );
+                ctx.textAlign = "start"; // reset to default if needed for other text
                 coreStats[i].processes.add(name);
             }
             coreStats[i].power = c.powerConsumption;
@@ -679,21 +958,29 @@
                 alert("프로세스 설정을 확인하세요");
                 return;
             }
+            const processList = Array.from(processTableBody.children).map(
+                (r) => ({
+                    processName: r.querySelector(".proc-name").value,
+                    arrivalTime: +r.querySelector(".proc-at").value,
+                    remainTime: +r.querySelector(".proc-bt").value,
+                    terminateTime: null,
+                    processTask:
+                        algorithmSelect.value === "MCIQ"
+                            ? r.querySelector(".proc-task").value
+                            : null,
+                })
+            );
+            // MCIQ일 때 모든 프로세스의 processTask가 지정되어 있는지 검증
+            if (algorithmSelect.value === "MCIQ") {
+                const invalid = processList.some(p => !p.processTask);
+                if (invalid) {
+                    alert("모든 프로세스에 Task가 지정되어 있어야 합니다. 프로세스를 삭제한 후 다시 설정해주세요 ");
+                    return;
+                }
+            }
             const req = {
                 algorithm: algorithmSelect.value,
-                processList: Array.from(processTableBody.children).map(
-                    (r) => ({
-                        processName:
-                        r.querySelector(".proc-name").value,
-                        arrivalTime: +r.querySelector(".proc-at").value,
-                        remainTime: +r.querySelector(".proc-bt").value,
-                        terminateTime: null,
-                        processTask:
-                            algorithmSelect.value === "MCIQ"
-                                ? r.querySelector(".proc-task").value
-                                : null,
-                    })
-                ),
+                processList: processList,
                 processorList: (coreTypes = Array.from(
                     processorTableBody.children
                 ).map((r) => r.querySelector(".core-type").value)),
@@ -715,6 +1002,8 @@
                     initCanvas();
                     renderCoreOverview();
                     step();
+                    // Reset processCount after simulation (and table reset)
+                    processCount = 0;
                 })
                 .catch(console.error);
         });
